@@ -36,10 +36,16 @@ export const crearAplicacion = (config: Configuracion, almacen: Almacen, proveed
   const prefijo = new URL(config.emisor).pathname;
   const marcos = ["'self'", ...config.marcos].join(' ');
   const delProveedor = proveedor.callback();
+  const portal = config.clientes.find((c) => c.id === 'portal')?.salidas?.[0] ?? null;
+  const VENCIO = 'La pantalla de ingreso venció (dura 15 minutos y sirve una sola vez).';
 
   const interaccion = async (req: IncomingMessage, res: ServerResponse, uid: string, paso: string): Promise<void> => {
     const detalles = await proveedor.interactionDetails(req, res);
-    if (detalles.uid !== uid) { enviarHtml(res, 400, paginaError('La pantalla de ingreso venció.')); return; }
+    if (detalles.uid !== uid) {
+      console.error(`[cuenta-unica] interacción ${paso || 'ver'}: uid de la cookie distinto al de la dirección`);
+      enviarHtml(res, 400, paginaError(VENCIO, portal));
+      return;
+    }
     const base = `${prefijo}${RUTA_INTERACCION}/${uid}`;
 
     if (detalles.prompt.name === 'consent') {
@@ -124,8 +130,10 @@ export const crearAplicacion = (config: Configuracion, almacen: Almacen, proveed
         await interaccion(req, res, coincide[1], coincide[2] ?? '');
       } catch (e) {
         const nombre = e instanceof Error ? e.name : '';
-        if (!res.headersSent) enviarHtml(res, 400, paginaError(nombre === 'SessionNotFound' ? 'La pantalla de ingreso venció.' : 'No se pudo completar el ingreso.'));
-        if (nombre !== 'SessionNotFound') console.error('[cuenta-unica] interacción:', nombre);
+        if (!res.headersSent) enviarHtml(res, 400, paginaError(nombre === 'SessionNotFound' ? VENCIO : 'No se pudo completar el ingreso.', portal));
+        // Diagnóstico sin datos personales: paso, tipo de error, su mensaje y si llegó la cookie de la interacción.
+        const conCookie = /(?:^|;\s*)_interaction=/.test(req.headers.cookie ?? '');
+        console.error(`[cuenta-unica] interacción ${coincide[2] ?? 'ver'}: ${nombre} · ${e instanceof Error ? e.message : ''} · cookie=${conCookie ? 'sí' : 'no'}`);
       }
       return;
     }

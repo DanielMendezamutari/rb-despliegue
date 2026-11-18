@@ -12,7 +12,7 @@ main{width:100%;max-width:380px;background:var(--tarjeta);border:1px solid var(-
 h1{font-size:1.3rem;margin:0 0 4px}p{margin:0 0 16px;color:var(--suave)}label{display:block;font-weight:600;margin:14px 0 6px}
 input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--borde);border-radius:8px;background:transparent;color:inherit}
 input:focus{outline:2px solid var(--marca);outline-offset:1px}
-button{margin-top:20px;width:100%;font:inherit;font-weight:600;padding:11px;border:0;border-radius:8px;background:var(--marca);color:#fff;cursor:pointer}
+button,.boton{display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-top:20px;width:100%;font:inherit;font-weight:600;padding:11px;border:0;border-radius:8px;background:var(--marca);color:#fff;cursor:pointer}
 .error{color:var(--error);background:color-mix(in srgb,var(--error) 10%,transparent);border-radius:8px;padding:10px 12px;margin:0 0 8px}
 .marca{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--marca);font-weight:700;margin-bottom:12px}`;
 
@@ -42,8 +42,11 @@ al menos 10 caracteres, con letras y números, sin su carnet.</p>${aviso(error)}
 <input id="repetida" name="repetida" type="password" autocomplete="new-password" minlength="10" required>
 <button type="submit">Guardar y continuar</button></form>`);
 
-export const paginaError = (mensaje: string): string => pagina('Aviso', `<h1>No se pudo continuar</h1><p>${escapar(mensaje)}</p>
-<p>Vuelva a abrir el sistema e intente de nuevo.</p>`);
+/** Aviso con salida: si se conoce el portal, un botón para volver a empezar (nadie queda atrapado al recargar). */
+export const paginaError = (mensaje: string, volver: string | null = null): string => pagina('Aviso', `<h1>No se pudo continuar</h1><p>${escapar(mensaje)}</p>
+${volver
+    ? `<p>Vuelva al portal y abra el sistema otra vez. No recargue esta página.</p><a class="boton" href="${escapar(volver)}">Volver al portal</a>`
+    : '<p>Vuelva a abrir el sistema e intente de nuevo.</p>'}`);
 
 export const paginaSalidaLista = (): string => pagina('Sesión cerrada', '<h1>Sesión cerrada</h1><p>Ya puede cerrar esta ventana.</p>');
 
