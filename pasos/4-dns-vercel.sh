@@ -6,7 +6,8 @@
 source "$(dirname "$0")/comun.sh"
 
 declare -a NOMBRES=(captacion seguimiento panel)
-valor() { local v="cname.vercel-dns.com"; for a in "${ARGS[@]}"; do [ "${a%%=*}" = "$1" ] && v="${a#*=}"; done; echo "${v%.}."; }
+# ${ARGS[@]+...}: sin argumentos la lista vacía no rompe `set -u` (bash 3 y 4).
+valor() { local v="cname.vercel-dns.com"; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "${a%%=*}" = "$1" ] && v="${a#*=}"; done; echo "${v%.}."; }
 ARGS=("$@")
 
 titulo "Paso 4 · DNS hacia Vercel"
