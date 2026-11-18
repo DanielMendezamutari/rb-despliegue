@@ -1,0 +1,21 @@
+PAQUETE DE DESPLIEGUE · Portal + Cuenta única (ribersoft.com)
+
+Se usa en la Terminal del cPanel. Cada paso muestra lo que hará y pide escribir SI. Se pueden repetir.
+
+  Primera vez (Terminal del cPanel):
+       cd ~ && git clone https://github.com/DanielMendezamutari/rb-despliegue.git && cd rb-despliegue
+  Versiones nuevas:
+       cd ~/rb-despliegue && git pull
+  (Sin GitHub: subir el .tar.gz a /home/<usuario> y  tar xzf rb-despliegue-*.tar.gz && cd rb-despliegue)
+
+  bash pasos/0-revisar.sh        Solo mira el estado (no cambia nada)
+  bash pasos/1-subdominios.sh    Crea portal. y cuenta. (y pide HTTPS)
+  bash pasos/2-cuenta-unica.sh   Base, app de Node 24 y configuración de la cuenta única
+  bash pasos/3-portal.sh         Publica el portal
+  bash pasos/4-dns-vercel.sh     CNAME de captacion., seguimiento., panel. hacia Vercel (después de Fer)
+  bash pasos/5-secretos.sh       Variables de cada sistema (muestra secretos: no comparta la pantalla)
+
+Administrar personas (después del paso 2):
+  cd ~/cuenta-unica-app && ~/nodevenv/cuenta-unica-app/24/bin/node src/admin.ts
+
+Guía completa: barra-comun/docs/DESPLIEGUE-HOSTING.md

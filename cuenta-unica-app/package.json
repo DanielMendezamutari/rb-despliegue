@@ -1,0 +1,22 @@
+{
+  "name": "cuenta-unica-servidor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cuenta única de Riber Bulma (OIDC) para Node.js en cPanel. Reemplaza a Keycloak con las mismas direcciones.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/servidor.ts",
+    "admin": "node src/admin.ts"
+  },
+  "dependencies": {
+    "mysql2": "3.24.6",
+    "oidc-provider": "9.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/oidc-provider": "^9.13.1"
+  }
+}
