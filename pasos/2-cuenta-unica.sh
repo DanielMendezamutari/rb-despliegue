@@ -1,6 +1,7 @@
 #!/bin/bash
 # Paso 2 · Cuenta única en cuenta.rb.ribersoft.com (Setup Node.js App, Node 24) con su base MariaDB.
-# Primera vez: crea base + usuario (clave al azar que NO se muestra), configuración con claves y secretos nuevos.
+# Primera vez: la BASE y su USUARIO los crea usted en cPanel (MySQL Database Wizard); el script los pide, prueba la
+# conexión y crea la configuración con claves y secretos nuevos. La clave se escribe oculta y no queda en el historial.
 # Siguientes veces: solo actualiza el código y reinicia (la configuración y las personas se conservan).
 source "$(dirname "$0")/comun.sh"
 
@@ -13,7 +14,7 @@ PRIMERA=1; [ -f "$DATOS_CU/config.json" ] && PRIMERA=0
 titulo "Paso 2 · Cuenta única"
 if [ "$PRIMERA" = 1 ]; then
   echo "  Primera instalación:"
-  echo "   - base de datos $BASE y usuario $BASE (clave al azar, guardada solo en $DATOS_CU/config.json, permisos 600)"
+  echo "   - usa la base y el usuario que USTED creó en cPanel (se los pedirá; la clave queda solo en $DATOS_CU/config.json, 600)"
   echo "   - claves de firma y secretos NUEVOS para los 5 clientes"
 else
   echo "  Actualización: se conserva $DATOS_CU/config.json y las personas."
@@ -25,14 +26,16 @@ confirmar
 mkdir -p "$DATOS_CU/respaldos" && chmod 700 "$DATOS_CU"
 
 if [ "$PRIMERA" = 1 ]; then
-  titulo "Base de datos"
-  if uapi --output=json Mysql list_databases | json "d.result.data.some(x=>x.database==='$BASE')" | grep -q true; then
-    falla "La base $BASE ya existe pero no hay configuración. Revise a mano (no se borra nada)."
+  titulo "Base de datos (la creó usted en cPanel)"
+  read -r -p "  Nombre de la base [$BASE]: " NOMBRE_BD; NOMBRE_BD="${NOMBRE_BD:-$BASE}"
+  read -r -p "  Usuario de la base [$NOMBRE_BD]: " USUARIO_BD; USUARIO_BD="${USUARIO_BD:-$NOMBRE_BD}"
+  read -r -s -p "  Clave de ese usuario (no se ve al escribir): " CLAVE_BD; echo
+  [ -n "$CLAVE_BD" ] || falla "La clave está vacía."
+  # MYSQL_PWD: la clave no aparece en la lista de procesos ni en el historial.
+  if ! MYSQL_PWD="$CLAVE_BD" mariadb -u "$USUARIO_BD" -h localhost "$NOMBRE_BD" -e "CREATE TABLE IF NOT EXISTS cu_prueba_permiso (x INT); DROP TABLE cu_prueba_permiso;" 2>/dev/null; then
+    falla "No conecta o el usuario no tiene TODOS los privilegios sobre $NOMBRE_BD. Revise en cPanel → Bases de datos MySQL."
   fi
-  CLAVE_BD="$(openssl rand -hex 24)"
-  uapi_ok Mysql create_database name="$BASE" >/dev/null && ok "base $BASE"
-  uapi_ok Mysql create_user name="$BASE" password="$CLAVE_BD" >/dev/null && ok "usuario $BASE"
-  uapi_ok Mysql set_privileges_on_database user="$BASE" database="$BASE" privileges=ALL%20PRIVILEGES >/dev/null && ok "permisos"
+  ok "conexión y permisos correctos ($USUARIO_BD → $NOMBRE_BD)"
 fi
 
 titulo "Código"
@@ -58,8 +61,10 @@ NODE_APP="$(ls -d "$CASA"/nodevenv/"$APP_CU"/*/bin/node 2>/dev/null | head -1)"
 admin() { (cd "$CASA/$APP_CU" && "$NODE_APP" src/admin.ts "$@"); }
 
 if [ "$PRIMERA" = 1 ]; then
-  CU_BASE="mysql://$BASE:$CLAVE_BD@localhost/$BASE" admin configurar --dominio "$SUF" >/dev/null && ok "configuración creada (600)"
-  unset CLAVE_BD
+  # La URL se arma en Node (codifica caracteres especiales de la clave); todo viaja por variables de entorno.
+  CU_BASE="$(U="$USUARIO_BD" C="$CLAVE_BD" B="$NOMBRE_BD" "$NODE_SISTEMA" -e 'const e=encodeURIComponent;process.stdout.write(`mysql://${e(process.env.U)}:${e(process.env.C)}@localhost/${e(process.env.B)}`)')"
+  CU_BASE="$CU_BASE" admin configurar --dominio "$SUF" >/dev/null && ok "configuración creada (600)"
+  unset CLAVE_BD CU_BASE
 fi
 admin migrar >/dev/null && ok "tablas listas"
 
