@@ -9,10 +9,10 @@ Se usa en la Terminal del cPanel. Cada paso muestra lo que hará y pide escribir
   (Sin GitHub: subir el .tar.gz a /home/<usuario> y  tar xzf rb-despliegue-*.tar.gz && cd rb-despliegue)
 
   bash pasos/0-revisar.sh        Solo mira el estado (no cambia nada)
-  bash pasos/1-subdominios.sh    Crea portal. y cuenta. (y pide HTTPS)
+  bash pasos/1-subdominios.sh    Crea portal.rb. y cuenta.rb. (y pide HTTPS)
   bash pasos/2-cuenta-unica.sh   Base, app de Node 24 y configuración de la cuenta única
   bash pasos/3-portal.sh         Publica el portal
-  bash pasos/4-dns-vercel.sh     CNAME de captacion., seguimiento., panel. hacia Vercel (después de Fer)
+  bash pasos/4-dns-vercel.sh     CNAME de captacion.rb., seguimiento.rb., panel.rb. hacia Vercel (después de Fer)
   bash pasos/5-secretos.sh       Variables de cada sistema (muestra secretos: no comparta la pantalla)
 
 Administrar personas (después del paso 2):

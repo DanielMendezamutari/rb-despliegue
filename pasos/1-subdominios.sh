@@ -1,19 +1,19 @@
 #!/bin/bash
-# Paso 1 · Crea portal.ribersoft.com y cuenta.ribersoft.com en ESTE cPanel y pide su certificado (AutoSSL).
+# Paso 1 · Crea portal.rb.ribersoft.com y cuenta.rb.ribersoft.com en ESTE cPanel y pide su certificado (AutoSSL).
 # Repetible: lo que ya existe se omite. NO toca rb.ribersoft.com ni ningún otro subdominio.
 source "$(dirname "$0")/comun.sh"
 
 titulo "Paso 1 · Subdominios en el cPanel"
 echo "  Se crearán (si no existen):"
-echo "   - portal.$DOMINIO  → carpeta $DOCROOT_PORTAL   (el portal)"
-echo "   - cuenta.$DOMINIO  → carpeta $DOCROOT_CU   (la cuenta única; la atiende la app de Node)"
+echo "   - portal.$SUF  → carpeta $DOCROOT_PORTAL   (el portal)"
+echo "   - cuenta.$SUF  → carpeta $DOCROOT_CU   (la cuenta única; la atiende la app de Node)"
 echo "  Luego se pide el certificado HTTPS (AutoSSL)."
 confirmar
 
 for s in portal cuenta; do
-  if existe_subdominio "$s"; then ok "$s.$DOMINIO ya existía"; continue; fi
-  uapi_ok SubDomain addsubdomain domain="$s" rootdomain="$DOMINIO" dir="$s.$DOMINIO" disallowdot=1 >/dev/null
-  ok "$s.$DOMINIO creado"
+  if existe_subdominio "$s"; then ok "$s.$SUF ya existía"; continue; fi
+  uapi_ok SubDomain addsubdomain domain="$s.$GRUPO" rootdomain="$DOMINIO" dir="$s.$SUF" disallowdot=0 >/dev/null
+  ok "$s.$SUF creado"
 done
 
 if uapi --output=json SSL start_autossl_check | json 'd.result.status' | grep -q 1; then

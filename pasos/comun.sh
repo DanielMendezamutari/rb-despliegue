@@ -2,15 +2,17 @@
 # Funciones comunes de los pasos de despliegue (Terminal del cPanel). No se ejecuta solo.
 set -euo pipefail
 
-DOMINIO="ribersoft.com"
+DOMINIO="ribersoft.com"                         # zona DNS del cPanel
+GRUPO="rb"                                      # todo Riber Bulma bajo rb.ribersoft.com (Cobros es rb. mismo)
+SUF="$GRUPO.$DOMINIO"                           # p. ej. portal.rb.ribersoft.com
 CUENTA="$(whoami)"
 CASA="$HOME"
 PAQUETE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NODE_SISTEMA="${NODE_SISTEMA:-/opt/alt/alt-nodejs24/root/usr/bin/node}"
 APP_CU="cuenta-unica-app"                       # carpeta de la app de Node (fuera de public_html)
 DATOS_CU="$CASA/cuenta-unica-datos"             # config.json (600) y respaldos
-DOCROOT_CU="$CASA/cuenta.$DOMINIO"
-DOCROOT_PORTAL="$CASA/portal.$DOMINIO"
+DOCROOT_CU="$CASA/cuenta.$SUF"
+DOCROOT_PORTAL="$CASA/portal.$SUF"
 
 titulo() { printf '\n\033[1m== %s ==\033[0m\n' "$1"; }
 ok()     { printf '  \033[32m✓\033[0m %s\n' "$1"; }
@@ -37,8 +39,9 @@ uapi_ok() {
   printf '%s' "$salida"
 }
 
+# Recibe el nombre corto (portal, cuenta...) y busca <nombre>.rb.ribersoft.com.
 existe_subdominio() {
-  uapi --output=json DomainInfo list_domains | json "d.result.data.sub_domains.includes('$1.$DOMINIO')" | grep -q true
+  uapi --output=json DomainInfo list_domains | json "d.result.data.sub_domains.includes('$1.$SUF')" | grep -q true
 }
 
 [ -x "$NODE_SISTEMA" ] || falla "No encuentro Node 24 en $NODE_SISTEMA"

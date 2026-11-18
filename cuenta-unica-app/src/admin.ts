@@ -13,7 +13,7 @@ import { nombreCompleto, normalizarUsuario } from './personas.ts';
 const AYUDA = `Cuenta única · administración
 
   configurar-local                       Configuración de desarrollo (localhost:8080, secretos *-secreto-local)
-  configurar --dominio ribersoft.com     Crea el archivo de configuración (claves y secretos nuevos). Lee CU_BASE.
+  configurar --dominio rb.ribersoft.com  Crea el archivo de configuración (claves y secretos nuevos). Lee CU_BASE.
   migrar                                 Crea las tablas (repetible)
   importar <personas-cuenta-unica.json>  Crea las personas del padrón con clave temporal (omite las que existen)
   crear <carnet> <nombres> <apellidos>   Crea una persona y muestra su clave temporal
@@ -43,11 +43,11 @@ export const claveTemporal = (largo = 12): string => {
 
 const secreto = (): string => randomBytes(32).toString('base64url');
 
-/** Clientes de producción con las direcciones de `*.<dominio>` (guía DESPLIEGUE-UNIFICADO, etapa 2). */
+/** Clientes de producción: `<dominio>` es el grupo (rb.ribersoft.com). Cobros vive en el grupo mismo; el resto en `*.<dominio>`. */
 export const clientesProduccion = (dominio: string): Cliente[] => [
   { id: 'portal', nombre: 'Portal', retornos: [`https://portal.${dominio}/callback`], salidas: [`https://portal.${dominio}/`] },
   { id: 'seguimiento', nombre: 'Seguimiento', secreto: secreto(), retornos: [`https://seguimiento.${dominio}/api/sso/callback`] },
-  { id: 'cobros', nombre: 'Cobros', secreto: secreto(), retornos: [`https://rb.${dominio}/api/v1/auth/sso/callback`] },
+  { id: 'cobros', nombre: 'Cobros', secreto: secreto(), retornos: [`https://${dominio}/api/v1/auth/sso/callback`] },
   { id: 'captacion', nombre: 'Captación', secreto: secreto(), retornos: [`https://captacion.${dominio}/api/cuenta-unica/callback`] },
   { id: 'panel-web', nombre: 'Panel web', secreto: secreto(), retornos: [`https://panel.${dominio}/api/sso/callback`] },
 ];
@@ -58,7 +58,7 @@ export const configuracionNueva = (dominio: string, baseDatos: string): Configur
   return validarConfiguracion({
     emisor: `https://cuenta.${dominio}/realms/riberbulma`,
     baseDatos,
-    marcos: [`https://*.${dominio}`],
+    marcos: [`https://*.${dominio}`, `https://${dominio}`],
     clientes: clientesProduccion(dominio),
     jwks: { keys: [jwk] },
     cookies: [secreto()],
@@ -120,7 +120,7 @@ const principal = async (argv: string[]): Promise<number> => {
       return 0;
     }
     const base = process.env['CU_BASE'];
-    if (!values.dominio || !base) { console.log('Uso: CU_BASE=mysql://usuario:clave@localhost/base node src/admin.ts configurar --dominio ribersoft.com'); return 2; }
+    if (!values.dominio || !base) { console.log('Uso: CU_BASE=mysql://usuario:clave@localhost/base node src/admin.ts configurar --dominio rb.ribersoft.com'); return 2; }
     escribirPrivado(ruta, JSON.stringify(configuracionNueva(values.dominio, base), null, 2) + '\n');
     console.log(`Configuración creada en ${ruta} (permisos 600).`);
     return 0;

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Paso 2 · Cuenta única en cuenta.ribersoft.com (Setup Node.js App, Node 24) con su base MariaDB.
+# Paso 2 · Cuenta única en cuenta.rb.ribersoft.com (Setup Node.js App, Node 24) con su base MariaDB.
 # Primera vez: crea base + usuario (clave al azar que NO se muestra), configuración con claves y secretos nuevos.
 # Siguientes veces: solo actualiza el código y reinicia (la configuración y las personas se conservan).
 source "$(dirname "$0")/comun.sh"
@@ -7,7 +7,7 @@ source "$(dirname "$0")/comun.sh"
 BASE="${CUENTA}_cuentaunica"
 ORIGEN="$PAQUETE/cuenta-unica-app"
 [ -f "$ORIGEN/app.cjs" ] || falla "No encuentro $ORIGEN (¿descomprimió el paquete completo?)"
-existe_subdominio cuenta || falla "Primero corra el paso 1 (no existe cuenta.$DOMINIO)"
+existe_subdominio cuenta || falla "Primero corra el paso 1 (no existe cuenta.$SUF)"
 PRIMERA=1; [ -f "$DATOS_CU/config.json" ] && PRIMERA=0
 
 titulo "Paso 2 · Cuenta única"
@@ -19,7 +19,7 @@ else
   echo "  Actualización: se conserva $DATOS_CU/config.json y las personas."
 fi
 echo "   - código en $CASA/$APP_CU (respaldo del anterior en $DATOS_CU/respaldos/)"
-echo "   - app de Node 24 en https://cuenta.$DOMINIO (arranque: app.cjs)"
+echo "   - app de Node 24 en https://cuenta.$SUF (arranque: app.cjs)"
 confirmar
 
 mkdir -p "$DATOS_CU/respaldos" && chmod 700 "$DATOS_CU"
@@ -49,8 +49,8 @@ if cloudlinux-selector get --json --interpreter nodejs 2>/dev/null | grep -q "\"
   ok "la app ya existía"
 else
   cloudlinux-selector create --json --interpreter nodejs --version 24 --app-root "$APP_CU" \
-    --domain "cuenta.$DOMINIO" --app-uri / --app-mode production --startup-file app.cjs >/dev/null
-  ok "app creada (Node 24, cuenta.$DOMINIO)"
+    --domain "cuenta.$SUF" --app-uri / --app-mode production --startup-file app.cjs >/dev/null
+  ok "app creada (Node 24, cuenta.$SUF)"
 fi
 cloudlinux-selector install-modules --json --interpreter nodejs --app-root "$APP_CU" >/dev/null && ok "dependencias instaladas (npm)"
 NODE_APP="$(ls -d "$CASA"/nodevenv/"$APP_CU"/*/bin/node 2>/dev/null | head -1)"
@@ -58,7 +58,7 @@ NODE_APP="$(ls -d "$CASA"/nodevenv/"$APP_CU"/*/bin/node 2>/dev/null | head -1)"
 admin() { (cd "$CASA/$APP_CU" && "$NODE_APP" src/admin.ts "$@"); }
 
 if [ "$PRIMERA" = 1 ]; then
-  CU_BASE="mysql://$BASE:$CLAVE_BD@localhost/$BASE" admin configurar --dominio "$DOMINIO" >/dev/null && ok "configuración creada (600)"
+  CU_BASE="mysql://$BASE:$CLAVE_BD@localhost/$BASE" admin configurar --dominio "$SUF" >/dev/null && ok "configuración creada (600)"
   unset CLAVE_BD
 fi
 admin migrar >/dev/null && ok "tablas listas"
@@ -73,7 +73,7 @@ cloudlinux-selector restart --json --interpreter nodejs --app-root "$APP_CU" >/d
 
 titulo "Prueba"
 sleep 3
-URL="https://cuenta.$DOMINIO/realms/riberbulma/.well-known/openid-configuration"
+URL="https://cuenta.$SUF/realms/riberbulma/.well-known/openid-configuration"
 CODIGO="$(curl -sk -o /tmp/cu-descubrimiento.$$ -w '%{http_code}' --max-time 30 "$URL" || true)"
 if [ "$CODIGO" = "200" ] && grep -q '"issuer":"https://cuenta' /tmp/cu-descubrimiento.$$; then
   ok "responde: $URL"
